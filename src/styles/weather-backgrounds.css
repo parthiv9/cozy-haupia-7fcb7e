@@ -1,0 +1,113 @@
+/**
+ * Dynamic weather backgrounds — mood wash, readability, transitions.
+ * Slug-specific tints live in globals.css (.weather-bg-tint--*).
+ * Root also gets .weather-bg-sunny | .weather-bg-cloudy | .weather-bg-rainy | .weather-bg-neutral
+ * (mapped from API via getWeatherMoodClass in weatherApi.js).
+ */
+
+/* Smooth handoff when condition / slug changes */
+.weather-bg {
+  transition:
+    background-color 0.75s ease-out,
+    filter 0.75s ease-out;
+}
+
+.weather-bg-mood {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.7s ease-out,
+    background 0.7s ease-out;
+  mix-blend-mode: soft-light;
+}
+
+.weather-app.app-night .weather-bg-mood {
+  mix-blend-mode: normal;
+  opacity: 0.85;
+}
+
+/* Clear / sunny — warm highlight (day); toned down at night */
+.weather-bg-mood--sunny {
+  background: radial-gradient(
+    ellipse 95% 70% at 12% 4%,
+    rgba(255, 230, 150, 0.45) 0%,
+    rgba(253, 186, 116, 0.12) 38%,
+    transparent 62%
+  );
+}
+
+.weather-app.app-night .weather-bg-mood--sunny {
+  background: radial-gradient(
+    ellipse 90% 55% at 50% 8%,
+    rgba(99, 102, 241, 0.18) 0%,
+    transparent 55%
+  );
+  opacity: 0.9;
+}
+
+/* Clouds — soft gray / white lift */
+.weather-bg-mood--cloudy {
+  background: radial-gradient(
+    ellipse 110% 55% at 50% 0%,
+    rgba(248, 250, 252, 0.55) 0%,
+    rgba(226, 232, 240, 0.22) 45%,
+    transparent 68%
+  );
+}
+
+.weather-app.app-night .weather-bg-mood--cloudy {
+  background: radial-gradient(
+    ellipse 100% 50% at 50% 0%,
+    rgba(51, 65, 85, 0.35) 0%,
+    transparent 60%
+  );
+  opacity: 0.75;
+}
+
+/* Rain / storm — darker veil (rain streaks are separate .rain-layer) */
+.weather-bg-mood--rainy {
+  background: linear-gradient(
+    185deg,
+    rgba(15, 23, 42, 0.35) 0%,
+    rgba(30, 41, 59, 0.15) 42%,
+    transparent 72%
+  );
+}
+
+.weather-app.app-night .weather-bg-mood--rainy {
+  background: linear-gradient(185deg, rgba(2, 6, 23, 0.5) 0%, transparent 65%);
+  opacity: 0.88;
+}
+
+/* Default / snow / edge cases — minimal wash */
+.weather-bg-mood--neutral {
+  background: transparent;
+}
+
+/* Readability: gentle scrim toward bottom so cards stay legible */
+.weather-bg-readability {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.75s ease-out, background 0.75s ease-out;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(255, 255, 255, 0.14) 78%,
+    rgba(255, 255, 255, 0.22) 100%
+  );
+}
+
+.weather-app.app-night .weather-bg-readability {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(2, 6, 23, 0.35) 75%,
+    rgba(2, 6, 23, 0.5) 100%
+  );
+}

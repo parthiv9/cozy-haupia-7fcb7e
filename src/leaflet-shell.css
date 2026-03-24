@@ -1,0 +1,41 @@
+/* Leaflet + wind canvas — not expressible as Tailwind utilities */
+.leaflet-map-shell .leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 0.75rem;
+  font-family: inherit;
+}
+.leaflet-map-shell .leaflet-control-zoom a {
+  border-radius: 0.375rem;
+}
+.leaflet-container .wind-flow-overlay {
+  z-index: 620 !important;
+  background: transparent !important;
+}
+.leaflet-container .wind-flow-overlay canvas {
+  background: transparent !important;
+}
+.leaflet-container .wind-layer-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Wind arrow markers (Open-Meteo / OWM grid) */
+.leaflet-container .wind-arrow-leaflet-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.leaflet-container .wind-arrow-pulse {
+  animation-name: wind-arrow-pulse;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes wind-arrow-pulse {
+  0%,
+  100% {
+    opacity: 0.82;
+  }
+  50% {
+    opacity: 1;
+  }
+}

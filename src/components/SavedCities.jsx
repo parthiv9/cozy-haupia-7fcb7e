@@ -1,0 +1,152 @@
+import { useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getFavorites, removeFavorite } from '../utils/storage';
+
+function dedupeFavorites(items) {
+  const seen = new Set();
+  return (items ?? []).filter((f) => {
+    const key = f.id ?? `${String(f.name || '').toLowerCase()}-${f.lat ?? ''}-${f.lon ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export default function SavedCities({
+  open,
+  onClose,
+  onSelectCity,
+  favorites,
+  onFavoritesChange,
+  embedded = false,
+}) {
+  const list = useMemo(
+    () => dedupeFavorites(favorites ?? getFavorites()),
+    [favorites]
+  );
+
+  const handleRemove = (e, id) => {
+    e.stopPropagation();
+    const next = removeFavorite(id);
+    onFavoritesChange?.(next);
+  };
+
+  const target = typeof document !== 'undefined' ? document.body : null;
+
+  const listBody =
+    list.length === 0 ? (
+      <li className="px-4 py-8 text-center text-sm text-white/70">
+        No saved cities yet. Search a place and tap save on the city card.
+      </li>
+    ) : (
+      list.map((f) => (
+        <li key={f.id}>
+          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 hover:border-sky-300/40 hover:bg-white/10">
+            <button
+              type="button"
+              onClick={() => {
+                onSelectCity?.(f);
+                if (!embedded) onClose?.();
+              }}
+              className="min-w-0 flex-1 px-4 py-3 text-left"
+            >
+              <p className="font-semibold text-white">{f.name}</p>
+              {f.country && <p className="text-xs text-white/55">{f.country}</p>}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleRemove(e, f.id)}
+              className="mr-2 rounded-lg px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/20"
+              aria-label={`Remove ${f.name}`}
+            >
+              Remove
+            </button>
+          </div>
+        </li>
+      ))
+    );
+
+  if (embedded) {
+    return (
+      <ul className="mt-4 flex max-h-[min(50vh,320px)] flex-col gap-4 overflow-y-auto" aria-label="Saved cities">
+        {listBody}
+      </ul>
+    );
+  }
+
+  if (!target) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[190] flex items-end justify-center bg-slate-900/50 p-4 backdrop-blur-sm sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="saved-cities-title"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="max-h-[70vh] w-full max-w-md overflow-hidden rounded-3xl border border-white/30 bg-white/95 shadow-2xl backdrop-blur-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200/80 px-5 py-4">
+              <h2 id="saved-cities-title" className="text-lg font-bold text-slate-900">
+                Saved cities
+              </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl p-2 text-slate-900/70 hover:bg-slate-100"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <ul className="max-h-[50vh] overflow-y-auto p-2">
+              {list.length === 0 && (
+                <li className="px-4 py-8 text-center text-sm text-slate-900/55">
+                  No saved cities yet. Search a place and tap save on the city card.
+                </li>
+              )}
+              {list.map((f) => (
+                <li key={f.id} className="mb-1">
+                  <div className="flex items-center gap-2 rounded-2xl border border-transparent hover:border-sky-200/60 hover:bg-sky-50/50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectCity?.(f);
+                        onClose?.();
+                      }}
+                      className="min-w-0 flex-1 px-4 py-3 text-left"
+                    >
+                      <p className="font-semibold text-slate-900">{f.name}</p>
+                      {f.country && <p className="text-xs text-slate-900/50">{f.country}</p>}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleRemove(e, f.id)}
+                      className="mr-2 rounded-lg px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
+                      aria-label={`Remove ${f.name}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    target
+  );
+}

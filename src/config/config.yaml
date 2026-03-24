@@ -1,0 +1,22 @@
+# SkyCast Ultra Pro Max — bundled app configuration
+app:
+  name: SkyCast Ultra Pro Max
+  tagline: Advanced Weather Intelligence Dashboard
+  version: "1.0.0"
+
+api:
+  openweather_env_var: VITE_OPENWEATHER_API_KEY
+
+defaults:
+  fallback_city: London
+  units: metric
+
+features:
+  weather_map: true
+  favorites: true
+  wind_overlay: true
+  animated_backgrounds: true
+
+ui:
+  search_debounce_ms: 300
+  forecast_days: 7

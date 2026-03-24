@@ -1,0 +1,26 @@
+app:
+  name: SkyCast Ultra Pro Max
+  tagline: Advanced Weather Intelligence
+  defaultCity: London
+  units: metric
+  forecastDays: 7
+
+api:
+  openWeather:
+    weatherUrl: https://api.openweathermap.org/data/2.5/weather
+    forecastUrl: https://api.openweathermap.org/data/2.5/forecast
+    geoDirectUrl: https://api.openweathermap.org/geo/1.0/direct
+  openMeteo:
+    forecastUrl: https://api.open-meteo.com/v1/forecast
+    geoUrl: https://geocoding-api.open-meteo.com/v1/search
+
+features:
+  favorites: true
+  weatherMap: true
+  mapClickWeather: true
+  animations: true
+  dayNightAuto: true
+
+ui:
+  debounceSearchMs: 300
+  suggestionMinChars: 2
