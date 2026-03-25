@@ -1,6 +1,8 @@
 /* react-slick layout: peek + stretch (see NewsCarousel.jsx) */
 .news-carousel-slick .slick-slider {
   position: relative;
+  width: 100%;
+  max-width: 100%;
 }
 
 .news-carousel-slick .slick-list {
@@ -20,6 +22,25 @@
   height: 100%;
   padding: 0 0.5rem;
   box-sizing: border-box;
+}
+
+/* Narrow viewports: no negative list margin (avoids horizontal clip / scroll); tighter gutters */
+@media (max-width: 640px) {
+  .news-carousel-slick .slick-list {
+    margin: 0;
+  }
+
+  .news-carousel-slick .slick-slide > div {
+    padding-left: 0.375rem;
+    padding-right: 0.375rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .news-carousel-slick .slick-slide > div {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
 }
 
 .news-carousel-slick .slick-slide .news-carousel-tile-root {

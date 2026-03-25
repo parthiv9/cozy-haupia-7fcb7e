@@ -80,7 +80,7 @@ export default function Navbar({
             <button
               type="button"
               onClick={onOpenNavMenu}
-              className="nav-menu-trigger flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/45 bg-white/45 text-app-fg shadow-sm transition hover:bg-white/65 focus:outline-none focus:ring-2 focus:ring-sky-500/30 sm:h-11 sm:w-11"
+              className="app-navbar-icon-btn flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/45 bg-white/45 text-app-fg shadow-sm transition hover:bg-white/65 focus:outline-none focus:ring-2 focus:ring-sky-500/30 sm:h-11 sm:w-11"
               aria-label="Open menu"
               aria-haspopup="dialog"
               aria-expanded={navMenuOpen}
@@ -149,7 +149,7 @@ export default function Navbar({
           {onSearch && (
             <button
               type="button"
-              className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/45 bg-white/45 text-app-fg shadow-sm transition hover:bg-white/65 focus:outline-none focus:ring-2 focus:ring-sky-500/30 md:hidden motion-reduce:transition-none ${
+              className={`app-navbar-icon-btn flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/45 bg-white/45 text-app-fg shadow-sm transition hover:bg-white/65 focus:outline-none focus:ring-2 focus:ring-sky-500/30 sm:h-11 sm:w-11 md:hidden motion-reduce:transition-none ${
                 mobileSearchOpen ? 'hidden' : ''
               }`}
               aria-label="Open search"

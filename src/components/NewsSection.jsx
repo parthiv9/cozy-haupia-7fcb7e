@@ -51,7 +51,7 @@ export default function NewsSection({ defaultCountryCode, locationCountryCode })
         </div>
       </div>
 
-      <div className="mt-7 sm:mt-8">
+      <div className="mt-7 min-w-0 sm:mt-8">
         {error && !loading && articles.length === 0 && (
           <div
             role="alert"

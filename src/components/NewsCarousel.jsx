@@ -48,30 +48,23 @@ export default function NewsCarousel({ articles, indexOffset = 3, country = '', 
       infinite: false,
       speed: 420,
       cssEase: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      slidesToShow: 2.35,
+      slidesToShow: 2.2,
       slidesToScroll: 1,
       swipeToSlide: true,
       touchThreshold: 7,
       arrows: false,
       /** Only user-driven slide changes — onInit/onReInit + setState caused update loops with InnerSlider */
       afterChange: syncNav,
+      /**
+       * Slick applies ranges: 0–bp0, bp0+1–bp1, …, lastBp+1–∞ (see react-slick slider.js).
+       * Keep ≤640px at 1 slide so a full card stays visible; avoid 1.75 in the tablet band (641–900)
+       * which cramped ~2 cards + clipped third inside padded sections.
+       */
       responsive: [
-        {
-          breakpoint: 1200,
-          settings: { slidesToShow: 2.15, slidesToScroll: 1 },
-        },
-        {
-          breakpoint: 900,
-          settings: { slidesToShow: 1.75, slidesToScroll: 1 },
-        },
-        {
-          breakpoint: 640,
-          settings: { slidesToShow: 1.2, slidesToScroll: 1 },
-        },
-        {
-          breakpoint: 400,
-          settings: { slidesToShow: 1.08, slidesToScroll: 1 },
-        },
+        { breakpoint: 480, settings: { slidesToShow: 1, slidesToScroll: 1 } },
+        { breakpoint: 640, settings: { slidesToShow: 1, slidesToScroll: 1 } },
+        { breakpoint: 900, settings: { slidesToShow: 1.12, slidesToScroll: 1 } },
+        { breakpoint: 1200, settings: { slidesToShow: 1.85, slidesToScroll: 1 } },
       ],
     }),
     [syncNav]
@@ -86,7 +79,7 @@ export default function NewsCarousel({ articles, indexOffset = 3, country = '', 
 
   return (
     <div
-      className="news-carousel-slick relative mt-3"
+      className="news-carousel-slick relative mt-3 min-w-0 w-full max-w-full"
       role="region"
       aria-roledescription="carousel"
       aria-label={ariaLabel}
