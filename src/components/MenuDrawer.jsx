@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Globe, Info, Star, X } from 'lucide-react';
 
 import { useDayNight } from '../context/DayNightContext';
 import { appName } from '../config/loadAppConfig';
@@ -8,6 +9,10 @@ import { appName } from '../config/loadAppConfig';
 import CameraSection from './CameraSection';
 import UploadSection from './UploadSection';
 import ContactsSection from './ContactsSection';
+import { navigateToHash } from '../utils/smoothScroll';
+import { drawerBackdropTransition, drawerSpring } from '../config/uiMotion';
+
+const ICON_STROKE = 2;
 
 /**
  * Sidebar: camera, gallery upload, device contacts (Contact Picker).
@@ -54,9 +59,9 @@ export default function MenuDrawer({ open, onClose, onOpenMap, onOpenSaved, onOp
 
   const headerActions = useMemo(
     () => [
-      { key: 'map', label: 'Weather map', onClick: () => onOpenMap?.(), emoji: '🌍' },
-      { key: 'saved', label: 'Saved cities', onClick: () => onOpenSaved?.(), emoji: '⭐' },
-      { key: 'about', label: 'About', onClick: () => onOpenAbout?.(), emoji: 'ℹ️' },
+      { key: 'map', label: 'Weather map', onClick: () => onOpenMap?.(), Icon: Globe },
+      { key: 'saved', label: 'Saved cities', onClick: () => onOpenSaved?.(), Icon: Star },
+      { key: 'about', label: 'About', onClick: () => onOpenAbout?.(), Icon: Info },
     ],
     [onOpenAbout, onOpenSaved, onOpenMap]
   );
@@ -70,7 +75,7 @@ export default function MenuDrawer({ open, onClose, onOpenMap, onOpenSaved, onOp
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
+            transition={drawerBackdropTransition}
             className="fixed inset-0 z-[85] bg-slate-950/50 backdrop-blur-sm"
             role="presentation"
             aria-hidden
@@ -82,13 +87,13 @@ export default function MenuDrawer({ open, onClose, onOpenMap, onOpenSaved, onOp
             initial={{ x: '-105%' }}
             animate={{ x: 0 }}
             exit={{ x: '-105%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            transition={drawerSpring}
             className={`fixed left-0 top-0 z-[90] flex h-[100dvh] w-full max-w-md flex-col border-r ${panel}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="menu-drawer-title"
           >
-            <div className={`flex items-start justify-between gap-3 border-b px-4 py-4 sm:px-5 ${headerBorder}`}>
+            <div className={`flex items-center justify-between gap-3 border-b px-4 py-4 sm:px-5 ${headerBorder}`}>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#000000]">Menu</p>
                 <h2 id="menu-drawer-title" className="mt-0.5 text-xl font-bold tracking-tight">
@@ -99,12 +104,10 @@ export default function MenuDrawer({ open, onClose, onOpenMap, onOpenSaved, onOp
               <button
                 type="button"
                 onClick={onClose}
-                className={`flex-shrink-0 rounded-xl border p-2.5 transition ${closeBtn}`}
+                className={`flex-shrink-0 rounded-full border p-2.5 transition ${closeBtn}`}
                 aria-label="Close menu"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="h-5 w-5" strokeWidth={ICON_STROKE} aria-hidden />
               </button>
             </div>
 
@@ -120,7 +123,11 @@ export default function MenuDrawer({ open, onClose, onOpenMap, onOpenSaved, onOp
                     <a
                       key={l.href}
                       href={l.href}
-                      onClick={onClose}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onClose();
+                        navigateToHash(l.href);
+                      }}
                       className={`flex min-h-[44px] items-center justify-center rounded-xl border px-3 text-sm font-semibold transition ${
                         isNight
                           ? 'border-white/10 bg-white/[0.04] hover:bg-white/[0.08]'
@@ -146,18 +153,18 @@ export default function MenuDrawer({ open, onClose, onOpenMap, onOpenSaved, onOp
 
             <div className={`border-t px-4 py-3 sm:px-5 ${headerBorder}`}>
               <div className="flex flex-wrap gap-2">
-                {headerActions.map((a) => (
+                {headerActions.map(({ key, label, onClick, Icon }) => (
                   <button
-                    key={a.key}
+                    key={key}
                     type="button"
                     onClick={() => {
-                      a.onClick();
+                      onClick();
                       onClose();
                     }}
-                    className={`flex min-h-[44px] min-w-[6.5rem] flex-1 items-center justify-center gap-1 rounded-2xl border px-3 py-2.5 text-xs font-semibold transition sm:text-sm ${footerBtn}`}
+                    className={`flex min-h-[44px] min-w-[6.5rem] flex-1 items-center justify-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-semibold transition sm:text-sm ${footerBtn}`}
                   >
-                    <span aria-hidden>{a.emoji}</span>
-                    {a.label}
+                    <Icon className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} aria-hidden />
+                    {label}
                   </button>
                 ))}
               </div>

@@ -1,10 +1,19 @@
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAppConfig } from '../config/loadConfig';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import {
+  modalBackdropTransition,
+  modalPanelSlidePx,
+  modalPanelSpring,
+} from '../config/uiMotion';
 
 export function AboutPanel({ open, onClose }) {
   const cfg = getAppConfig();
   const target = typeof document !== 'undefined' ? document.body : null;
+
+  useBodyScrollLock(Boolean(open));
+
   if (!target) return null;
 
   return createPortal(
@@ -14,13 +23,15 @@ export function AboutPanel({ open, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={modalBackdropTransition}
           className="fixed inset-0 z-[185] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.94, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.94, opacity: 0 }}
+            initial={{ scale: 0.96, opacity: 0, y: modalPanelSlidePx }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.96, opacity: 0, y: modalPanelSlidePx }}
+            transition={modalPanelSpring}
             className="max-w-md rounded-3xl border border-white/30 bg-white/95 p-6 shadow-2xl backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >

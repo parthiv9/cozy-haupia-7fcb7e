@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Mic, Search as SearchGlyph, X } from 'lucide-react';
 import { getSearchSuggestions } from '../utils/weatherApi';
+
+const ICON_STROKE = 2;
 
 const DEBOUNCE_MS = 300;
 
-/**
- * Navbar search: debounced suggestions, keyboard nav, compact glass styling.
- */
+/** Navbar search: debounced suggestions, keyboard nav, compact glass styling. */
 export default function Search({
   onSearch,
   loading,
@@ -14,14 +15,22 @@ export default function Search({
   layout = 'navbar',
   onClearSearch,
   searchActive = false,
+  onMobileHeaderClose,
+  onQuerySync,
+  autoFocus = false,
 }) {
   const layoutCls =
-    layout === 'bar' ? 'block w-full max-w-none' : 'hidden min-w-0 max-w-xl flex-1 md:block';
+    layout === 'bar'
+      ? 'block w-full max-w-none'
+      : layout === 'navbarMobileExpanded'
+        ? 'block w-full min-w-0 max-w-none flex-1 px-0'
+        : 'hidden min-w-0 max-w-xl flex-1 md:block';
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(-1);
   const ref = useRef(null);
+  const queryRef = useRef('');
   const suggestionsListId = useId().replace(/:/g, '');
   const recognitionRef = useRef(null);
   const voiceTranscriptRef = useRef('');
@@ -44,6 +53,20 @@ export default function Search({
       }
     };
   }, []);
+
+  useEffect(() => {
+    queryRef.current = query;
+    onQuerySync?.(query);
+  }, [query, onQuerySync]);
+
+  useEffect(() => {
+    if (!autoFocus || layout !== 'navbarMobileExpanded') return;
+    const t = requestAnimationFrame(() => {
+      const el = ref.current?.querySelector?.('input[type="search"]');
+      el?.focus?.();
+    });
+    return () => cancelAnimationFrame(t);
+  }, [autoFocus, layout]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -74,6 +97,7 @@ export default function Search({
     const q = query.trim();
     if (!q) {
       onClearSearch?.();
+      if (layout === 'navbarMobileExpanded') onMobileHeaderClose?.();
       return;
     }
     onSearch(q);
@@ -84,6 +108,7 @@ export default function Search({
     setOpen(false);
     setHi(-1);
     onClearSearch?.();
+    if (layout === 'navbarMobileExpanded') onMobileHeaderClose?.();
   };
 
   const pick = (item) => {
@@ -94,8 +119,20 @@ export default function Search({
   };
 
   const onKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      if (open && suggestions.length > 0) {
+        setOpen(false);
+        setHi(-1);
+        e.preventDefault();
+        return;
+      }
+      if (layout === 'navbarMobileExpanded' && !query.trim()) {
+        e.preventDefault();
+        onMobileHeaderClose?.();
+      }
+      return;
+    }
     if (!open || suggestions.length === 0) {
-      if (e.key === 'Escape') setOpen(false);
       return;
     }
     if (e.key === 'ArrowDown') {
@@ -107,9 +144,6 @@ export default function Search({
     } else if (e.key === 'Enter' && hi >= 0 && suggestions[hi]) {
       e.preventDefault();
       pick(suggestions[hi]);
-    } else if (e.key === 'Escape') {
-      setOpen(false);
-      setHi(-1);
     }
   };
 
@@ -172,6 +206,7 @@ export default function Search({
   return (
     <form
       ref={ref}
+      id={layout === 'navbarMobileExpanded' ? 'navbar-search-mobile' : undefined}
       onSubmit={submit}
       className={`relative mx-0 min-w-0 px-2 sm:mx-2 ${layoutCls} ${className}`.trim()}
     >
@@ -181,6 +216,13 @@ export default function Search({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
+          onBlur={() => {
+            if (layout !== 'navbarMobileExpanded' || !onMobileHeaderClose) return;
+            window.setTimeout(() => {
+              if (!ref.current || ref.current.contains(document.activeElement)) return;
+              if (!queryRef.current.trim()) onMobileHeaderClose();
+            }, 180);
+          }}
           onKeyDown={onKeyDown}
           placeholder="Search city or country…"
           disabled={loading}
@@ -195,17 +237,13 @@ export default function Search({
               : 'border-white/45 bg-white/55 text-app-fg backdrop-blur-xl placeholder:text-app-fg/45 focus:border-sky-400/60'
           }`}
         />
-        <svg
+        <SearchGlyph
           className={`pointer-events-none absolute left-3 top-1/2 z-0 h-4 w-4 -translate-y-1/2 ${
             suggestionsOpen ? 'text-slate-400' : 'text-app-fg/40'
           }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+          strokeWidth={ICON_STROKE}
           aria-hidden
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        />
         {showClear && (
           <button
             type="button"
@@ -220,9 +258,7 @@ export default function Search({
                 : 'border-white/45 bg-white/50 text-app-fg hover:bg-white/70'
             }`}
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
           </button>
         )}
         {voiceSupported && (
@@ -242,20 +278,11 @@ export default function Search({
                 : 'border-white/45 bg-white/50 text-app-fg hover:bg-white/70'
             }`}
           >
-            <svg
+            <Mic
               aria-hidden
-              viewBox="0 0 24 24"
               className={`h-4 w-4 flex-shrink-0 ${isListening ? 'animate-pulse text-sky-600' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-              <path d="M12 19v4" />
-            </svg>
+              strokeWidth={ICON_STROKE}
+            />
           </button>
         )}
         <AnimatePresence>

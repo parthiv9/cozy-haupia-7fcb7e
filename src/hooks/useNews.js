@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, startTransition } from 'react';
 import {
   fetchWeatherNewsByCountry,
   withPlaceholderNewsImages,
@@ -23,16 +23,18 @@ export function useNews(countryCode) {
     (async () => {
       const { ok, articles: list, error: apiError } = await fetchWeatherNewsByCountry(countryCode);
       if (g !== gen.current) return;
-      if (!ok || !list?.length) {
-        setError(apiError || 'Unable to load weather news');
-        setArticles([]);
-      } else {
-        setError(null);
-        setArticles(
-          withPlaceholderNewsImages(list).slice(0, MAX_WEATHER_NEWS_ARTICLES)
-        );
-      }
-      setLoading(false);
+      startTransition(() => {
+        if (!ok || !list?.length) {
+          setError(apiError || 'Unable to load weather news');
+          setArticles([]);
+        } else {
+          setError(null);
+          setArticles(
+            withPlaceholderNewsImages(list).slice(0, MAX_WEATHER_NEWS_ARTICLES)
+          );
+        }
+        setLoading(false);
+      });
     })();
   }, [countryCode]);
 
@@ -43,10 +45,12 @@ export function useNews(countryCode) {
       const { ok, articles: list } = await fetchWeatherNewsByCountry(countryCode);
       if (before !== gen.current) return;
       if (ok && list?.length) {
-        setError(null);
-        setArticles(
-          withPlaceholderNewsImages(list).slice(0, MAX_WEATHER_NEWS_ARTICLES)
-        );
+        startTransition(() => {
+          setError(null);
+          setArticles(
+            withPlaceholderNewsImages(list).slice(0, MAX_WEATHER_NEWS_ARTICLES)
+          );
+        });
       }
     }, REFRESH_MS);
     return () => clearInterval(id);

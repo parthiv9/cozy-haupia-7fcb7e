@@ -1,4 +1,5 @@
 import { getGNewsApiKey, getNewsApiKey, hasAnyNewsApiKey } from '../config/env.js';
+import { NEWS_REGION_OPTIONS, normalizeNewsRegionSelection } from '../config/newsRegions.js';
 
 const GNEWS_SEARCH = 'https://gnews.io/api/v4/search';
 const NEWSAPI_EVERYTHING = 'https://newsapi.org/v2/everything';
@@ -61,10 +62,11 @@ const STRICT_WEATHER_RX =
 /**
  * Final RSS tier: multiple sources merged & deduped (via rss2json in the browser).
  * URLs may change; failed feeds are skipped.
+ * CNN weather RSS often returns 422 via rss2json (blocked or unfetchable from their servers).
  */
 const RSS_WEATHER_FEEDS = [
   { url: 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', sourceLabel: 'BBC Science & Environment' },
-  { url: 'https://rss.cnn.com/rss/edition_weather.rss', sourceLabel: 'CNN Weather' },
+  { url: 'https://www.sciencedaily.com/rss/earth_climate.xml', sourceLabel: 'ScienceDaily Earth & Climate' },
 ];
 
 /** Log once per page load when no news API keys are configured (avoids console spam on 5‑min refresh). */
@@ -73,31 +75,53 @@ let didWarnMissingNewsApiKeys = false;
 function warnNewsApiKeysMissingOnce() {
   if (hasAnyNewsApiKey() || didWarnMissingNewsApiKeys) return;
   didWarnMissingNewsApiKeys = true;
-  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-    console.warn(
-      '[SkyCast News] No VITE_GNEWS_API_KEY or VITE_NEWS_API_KEY found (or values are placeholders). Using BBC / CNN RSS fallback.'
+  if (import.meta.env.DEV && typeof console.debug === 'function') {
+    console.debug(
+      '[SkyCast News] No VITE_GNEWS_API_KEY or VITE_NEWS_API_KEY (or placeholders). Using RSS fallback (BBC + ScienceDaily).'
     );
   }
 }
 
-/** Country names appended in query for better result relevance (especially India). */
-const COUNTRY_QUERY_NAME = {
-  in: 'India',
-  us: 'USA',
-  gb: 'UK',
-  au: 'Australia',
+/** Country names appended in query for better result relevance — derived from `NEWS_REGION_OPTIONS`. */
+const COUNTRY_QUERY_NAME = Object.fromEntries(
+  NEWS_REGION_OPTIONS.map((o) => [o.code, o.queryName || o.label])
+);
+
+/** Richer regex where generic `queryName` matching is too broad or too narrow. */
+const COUNTRY_PATTERNS_EXPLICIT = {
+  in: /india|indian|delhi|mumbai|bengal|kerala|tamil|chennai|kolkata|hyderabad|bangalore|gujarat|assam|himalaya/i,
+  us: /u\.s\.|united states|america|california|texas|florida|alaska|hawaii|washington|atlantic|gulf|n\.?y\.?c|new york/i,
+  gb: /uk|britain|british|england|scotland|wales|london|met office|ireland|northern ireland/i,
+  au: /australia|australian|sydney|melbourne|queensland|perth|bushfire|tasmania|adelaide|brisbane/i,
+  ca: /canada|canadian|toronto|vancouver|montreal|alberta|ontario/i,
+  de: /germany|german|berlin|munich|bavaria/i,
+  fr: /france|french|paris|lyon|météo/i,
+  jp: /japan|japanese|tokyo|osaka|typhoon/i,
+  nz: /new zealand|auckland|wellington|christchurch/i,
+  br: /brazil|brazilian|são paulo|rio/i,
+  sg: /singapore/i,
+  za: /south africa|johannesburg|cape town/i,
 };
 
+function patternFromQueryName(name) {
+  if (!name) return /$^/;
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(escaped, 'i');
+}
+
+const COUNTRY_PATTERNS = Object.fromEntries(
+  NEWS_REGION_OPTIONS.map((o) => {
+    const name = o.queryName || o.label;
+    return [o.code, COUNTRY_PATTERNS_EXPLICIT[o.code] || patternFromQueryName(name)];
+  })
+);
+
 /**
- * GNews expects `gb` for United Kingdom. Normalize aliases before requests.
  * @param {string} code
  * @returns {string}
  */
 function normalizeCountryCode(code) {
-  const c = String(code || 'in').toLowerCase().trim();
-  if (c === 'uk') return 'gb';
-  if (c === 'in' || c === 'us' || c === 'gb' || c === 'au') return c;
-  return 'in';
+  return normalizeNewsRegionSelection(code);
 }
 
 function getCountryQueryName(code) {
@@ -108,13 +132,6 @@ function buildGNewsQuery(code) {
   const countryName = getCountryQueryName(code);
   return countryName ? `${GNEWS_Q} ${countryName}` : GNEWS_Q;
 }
-
-const COUNTRY_PATTERNS = {
-  in: /india|indian|delhi|mumbai|bengal|kerala|tamil|chennai|kolkata|hyderabad|bangalore|gujarat|assam|himalaya/i,
-  us: /u\.s\.|united states|america|california|texas|florida|alaska|hawaii|washington|atlantic|gulf|n\.?y\.?c|new york/i,
-  gb: /uk|britain|british|england|scotland|wales|london|met office|ireland|northern ireland/i,
-  au: /australia|australian|sydney|melbourne|queensland|perth|bushfire|tasmania|adelaide|brisbane/i,
-};
 
 export const REFRESH_MS = 5 * 60 * 1000;
 
@@ -393,7 +410,7 @@ async function tryAggregatedRss(countryCode) {
 }
 
 /**
- * Priority: **GNews** (`VITE_GNEWS_API_KEY`) → **NewsAPI** (`VITE_NEWS_API_KEY`) → **RSS** (BBC + CNN).
+ * Priority: **GNews** → **NewsAPI** → **RSS** (BBC + ScienceDaily).
  * If both keys are missing or placeholders, only RSS runs — no API requests with empty keys.
  *
  * @param {string} countryCode ISO 3166-1 alpha-2 (e.g. in, us, gb, au)
@@ -437,8 +454,8 @@ export async function fetchWeatherNewsByCountry(countryCode) {
       error: 'Unable to load weather news',
     };
   } catch (e) {
-    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-      console.warn('[SkyCast News] Weather news fetch failed.', e);
+    if (import.meta.env.DEV && typeof console.debug === 'function') {
+      console.debug('[SkyCast News] Weather news fetch failed.', e);
     }
     return {
       ok: false,

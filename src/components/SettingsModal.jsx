@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFavoriteCities, removeFavoriteCity } from '../utils/storage';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import {
+  modalBackdropTransition,
+  modalPanelSlidePx,
+  modalPanelSpring,
+} from '../config/uiMotion';
 
 /**
  * Saved cities panel (opened from menu). Tap a city → parent loads weather and scrolls home.
@@ -38,14 +44,14 @@ export default function SettingsModal({ open, onClose, onSelectSavedCity, listRe
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.96, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.96, opacity: 0 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+            initial={{ scale: 0.96, opacity: 0, y: modalPanelSlidePx }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.96, opacity: 0, y: modalPanelSlidePx }}
+            transition={modalPanelSpring}
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[85vh] w-full max-w-md overflow-hidden rounded-3xl border border-white/30 bg-white/92 text-slate-900 shadow-2xl backdrop-blur-xl"
+            className="flex max-h-[min(90dvh,100%)] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-white/30 bg-white/92 text-slate-900 shadow-2xl backdrop-blur-xl"
           >
-            <div className="border-b border-slate-200/80 px-5 py-4">
+            <div className="shrink-0 border-b border-slate-200/80 px-5 py-4">
               <h2 id="saved-cities-modal-title" className="text-xl font-bold">
                 Saved cities
               </h2>
@@ -55,7 +61,7 @@ export default function SettingsModal({ open, onClose, onSelectSavedCity, listRe
               </p>
             </div>
 
-            <div className="max-h-[calc(85vh-8rem)] overflow-y-auto px-5 py-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
               <ul className="space-y-1">
                 {cities.length === 0 && (
                   <li className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6 text-center text-sm text-slate-500">

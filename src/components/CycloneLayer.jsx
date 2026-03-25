@@ -21,16 +21,17 @@ function cardinalFromDeg(deg) {
 }
 
 /**
- * DivIcon: red/orange ring + animated cyclone emoji.
+ * DivIcon: red/orange ring + animated cyclone marker (Lucide tornado paths as inline SVG).
  * @param {number} windKts
  */
 function createCycloneDivIcon(windKts) {
   const strong = windKts != null && Number(windKts) >= 64;
   const ring = strong ? 'rgba(220,38,38,0.95)' : 'rgba(234,88,12,0.95)';
   const glow = strong ? 'rgba(248,113,113,0.55)' : 'rgba(251,146,60,0.5)';
+  const cycloneGlyph = `<span class="skycast-cyclone-emoji" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="skycast-cyclone-glyph"><path d="M21 4H3"/><path d="M18 8H6"/><path d="M19 12H9"/><path d="M16 16h-6"/><path d="M11 20H9"/></svg></span>`;
   return L.divIcon({
     className: 'skycast-cyclone-divicon',
-    html: `<div class="skycast-cyclone-pin" style="--cyclone-ring:${ring};--cyclone-glow:${glow}"><span class="skycast-cyclone-emoji" aria-hidden="true">🌪️</span></div>`,
+    html: `<div class="skycast-cyclone-pin" style="--cyclone-ring:${ring};--cyclone-glow:${glow}">${cycloneGlyph}</div>`,
     iconSize: [40, 40],
     iconAnchor: [20, 20],
     popupAnchor: [0, -18],

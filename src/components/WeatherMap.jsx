@@ -19,6 +19,9 @@ import { getOpenWeatherApiKey } from '../config/env';
 import WindArrowsLayer from './WindArrowsLayer';
 import WindFlowLayer from './WindFlowLayer';
 import CycloneTracksLayer from './CycloneTracksLayer';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { modalBackdropTransition, modalPanelSpring } from '../config/uiMotion';
+import { MapPin, Moon, Sun, Tornado } from 'lucide-react';
 
 /** Resolved from `import.meta.env.VITE_OPENWEATHER_API_KEY` via `getOpenWeatherApiKey()` (trim, placeholders → ''). */
 const API_KEY = getOpenWeatherApiKey();
@@ -32,6 +35,8 @@ const DEFAULT_ZOOM = 2;
 const FOCUS_ZOOM = 11;
 const BASE_MAP_Z = 200;
 const OWM_PANE = 'owmWeatherStack';
+
+const ICON_STROKE = 2;
 
 /** Exposes Leaflet map to parent once initialized (sidebar toggles live outside MapContainer). */
 function MapReadyBridge({ onMap }) {
@@ -186,6 +191,7 @@ function LiveWeatherPopupMarker({ focus, setFocusFromDrag, mapOpen }) {
  * No search. activeLayers defaults all false; multiple layers may be on at once.
  */
 export default function WeatherMap({ open, onClose, centerLat, centerLng, embedded = false }) {
+  useBodyScrollLock(Boolean(open && !embedded));
   const effectiveOpen = embedded || open;
   const [focus, setFocus] = useState({ lat: null, lng: null });
   const [activeLayers, setActiveLayers] = useState({
@@ -345,25 +351,23 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
   const tempLayer = tempLayerRef.current;
   const canToggle = Boolean(API_KEY && layersReady && cloudsLayer && rainLayer && tempLayer);
 
-  const asideClass = embedded
-    ? `flex max-h-[36vh] w-full flex-shrink-0 flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-none sm:w-[min(100%,300px)] sm:rounded-r-none ${panel} sm:border-r-0`
-    : `flex max-h-[36vh] w-full flex-shrink-0 flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-none sm:w-[min(100%,300px)] sm:rounded-r-none ${panel} sm:border-r-0`;
+  const asideClass = `flex w-full flex-shrink-0 flex-col rounded-2xl border shadow-2xl sm:w-[min(100%,300px)] sm:rounded-r-none ${panel} sm:border-r-0`;
 
   const mapWrapClass = embedded
-    ? `relative w-full h-[300px] sm:h-[350px] md:h-[400px] overflow-hidden rounded-2xl border shadow-xl ${
+    ? `relative w-full aspect-[5/4] min-h-[12rem] overflow-hidden rounded-2xl border shadow-xl ${
         panelLight ? 'border-slate-200 bg-slate-100' : 'border-white/10 bg-slate-950'
       }`
-    : `relative min-h-[min(52vh,420px)] flex-1 overflow-hidden rounded-2xl border shadow-xl sm:min-h-0 sm:rounded-l-none sm:rounded-r-2xl ${
+    : `relative flex min-h-[min(40dvh,17.5rem)] flex-1 min-w-0 flex-col overflow-hidden rounded-2xl border shadow-xl sm:min-h-0 sm:flex-1 sm:self-stretch sm:rounded-l-none sm:rounded-r-2xl ${
         panelLight ? 'border-slate-200 bg-slate-100' : 'border-white/10 bg-slate-950'
       }`;
 
   const leafletShellClass = embedded
-    ? 'leaflet-map-shell h-full min-h-[min(52vh,420px)] w-full sm:min-h-[min(76vh,720px)]'
-    : 'leaflet-map-shell h-full min-h-[min(52vh,420px)] w-full sm:min-h-[min(76vh,720px)]';
+    ? 'leaflet-map-shell absolute inset-0 h-full w-full min-h-0'
+    : 'leaflet-map-shell flex min-h-0 flex-1 flex-col h-full w-full';
 
   const mapContainerClass = embedded
-    ? 'w-full h-full rounded-2xl'
-    : 'h-full w-full rounded-2xl sm:rounded-l-none sm:rounded-r-2xl';
+    ? 'h-full w-full rounded-2xl'
+    : 'h-full min-h-0 w-full flex-1 rounded-2xl sm:rounded-l-none sm:rounded-r-2xl';
 
   const asideEl = (
       <aside className={asideClass}>
@@ -389,14 +393,18 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
             <button
               type="button"
               onClick={() => setPanelLight((v) => !v)}
-              className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+              className={`inline-flex items-center justify-center rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
                 panelLight
                   ? 'border-slate-200 bg-slate-100 text-slate-800'
                   : 'border-white/20 bg-white/10 text-white'
               }`}
               title="Toggle panel theme"
             >
-              {panelLight ? '🌙' : '☀️'}
+              {panelLight ? (
+                <Moon className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
+              ) : (
+                <Sun className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
+              )}
             </button>
             {!embedded && (
               <button
@@ -414,14 +422,21 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
           </div>
         </div>
 
-              <div className="flex-1 overflow-y-auto px-4 py-3">
+              <div className="px-4 py-3">
                 <button
                   type="button"
                   disabled={geoLoading}
                   onClick={handleGeo}
-                  className="mb-4 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-sky-600 disabled:opacity-50"
+                  className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-sky-600 disabled:opacity-50"
                 >
-                  {geoLoading ? 'Locating…' : '📍 Use my location'}
+                  {geoLoading ? (
+                    'Locating…'
+                  ) : (
+                    <>
+                      <MapPin className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} aria-hidden />
+                      Use my location
+                    </>
+                  )}
                 </button>
                 {geoError && (
                   <p className={`mb-3 text-xs ${panelLight ? 'text-amber-700' : 'text-amber-200'}`}>
@@ -500,7 +515,7 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
                         disabled={!leafletMap}
                         aria-pressed={cyclonesEnabled}
                         onClick={() => setCyclonesEnabled((v) => !v)}
-                        className={`mb-2 w-full rounded-lg border px-3 py-2.5 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                        className={`mb-2 flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
                           cyclonesEnabled
                             ? panelLight
                               ? 'border-violet-500 bg-violet-600 text-white'
@@ -510,7 +525,8 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
                               : 'border-white/15 bg-white/5 text-slate-100 hover:bg-white/10'
                         }`}
                       >
-                        🌪️ Tropical cyclones
+                        <Tornado className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} aria-hidden />
+                        Tropical cyclones
                       </button>
                       {cyclonesEnabled && cycloneMeta.loading && (
                         <p className={`mb-2 text-[11px] ${muted}`}>Loading EONET tracks…</p>
@@ -651,7 +667,11 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
 
   if (embedded) {
     return (
-      <div className="flex w-full flex-col gap-0 sm:flex-row" role="region" aria-label="Weather map">
+      <div
+        className="flex w-full flex-col gap-4 sm:flex-row sm:items-stretch"
+        role="region"
+        aria-label="Weather map"
+      >
         {mapChrome}
       </div>
     );
@@ -664,6 +684,7 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={modalBackdropTransition}
           className="fixed inset-0 z-[200] bg-slate-950/70 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
@@ -671,11 +692,11 @@ export default function WeatherMap({ open, onClose, centerLat, centerLng, embedd
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className="mx-auto flex h-full max-h-[100dvh] max-w-[1600px] flex-col gap-0 p-2 sm:flex-row sm:p-4"
+            exit={{ opacity: 0, y: 24 }}
+            transition={modalPanelSpring}
+            className="mx-auto flex max-h-[100dvh] min-h-0 w-full max-w-[1600px] flex-col gap-4 overflow-y-auto overscroll-contain p-2 sm:flex-row sm:items-stretch sm:p-4"
             onClick={(e) => e.stopPropagation()}
           >
             {mapChrome}

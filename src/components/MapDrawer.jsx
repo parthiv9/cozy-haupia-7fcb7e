@@ -1,10 +1,15 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import { NAV_MENU_SECTIONS } from '../config/navMenuConfig';
 import { NavMenuIcon } from '../config/navMenuIcons';
 import { useDayNight } from '../context/DayNightContext';
 import { appName } from '../config/loadAppConfig';
+import { navigateToHash } from '../utils/smoothScroll';
+import { drawerBackdropTransition, drawerSpring } from '../config/uiMotion';
+
+const ICON_STROKE = 2;
 
 /**
  * Scalable side drawer — sections from `navMenuConfig.js`, actions from `actionHandlers`.
@@ -69,7 +74,7 @@ export default function MapDrawer({ open, onClose, actionHandlers = {} }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={drawerBackdropTransition}
             className="fixed inset-0 z-[85] bg-slate-950/45 backdrop-blur-sm"
             role="presentation"
             aria-hidden
@@ -81,7 +86,7 @@ export default function MapDrawer({ open, onClose, actionHandlers = {} }) {
             initial={{ x: '-105%' }}
             animate={{ x: 0 }}
             exit={{ x: '-105%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            transition={drawerSpring}
             className={`fixed left-0 top-0 z-[90] flex h-full w-full max-w-md flex-col border-r ${panel}`}
             role="dialog"
             aria-modal="true"
@@ -101,9 +106,7 @@ export default function MapDrawer({ open, onClose, actionHandlers = {} }) {
                 className={`flex-shrink-0 rounded-xl border p-2.5 transition ${closeBtn}`}
                 aria-label="Close menu"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="h-5 w-5" strokeWidth={ICON_STROKE} aria-hidden />
               </button>
             </div>
 
@@ -155,7 +158,11 @@ export default function MapDrawer({ open, onClose, actionHandlers = {} }) {
                             <li key={item.id}>
                               <a
                                 href={item.href}
-                                onClick={onClose}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  onClose();
+                                  navigateToHash(item.href);
+                                }}
                                 className={`flex items-start gap-3 rounded-xl border px-3 py-3 transition ${itemBase}`}
                               >
                                 {content}

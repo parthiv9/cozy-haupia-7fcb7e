@@ -1,7 +1,16 @@
 import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 import { getFavorites, removeFavorite } from '../utils/storage';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import {
+  modalBackdropTransition,
+  modalPanelSlidePx,
+  modalPanelSpring,
+} from '../config/uiMotion';
+
+const ICON_STROKE = 2;
 
 function dedupeFavorites(items) {
   const seen = new Set();
@@ -33,6 +42,8 @@ export default function SavedCities({
   };
 
   const target = typeof document !== 'undefined' ? document.body : null;
+
+  useBodyScrollLock(Boolean(open && !embedded));
 
   const listBody =
     list.length === 0 ? (
@@ -69,7 +80,7 @@ export default function SavedCities({
 
   if (embedded) {
     return (
-      <ul className="mt-4 flex max-h-[min(50vh,320px)] flex-col gap-4 overflow-y-auto" aria-label="Saved cities">
+      <ul className="mt-4 flex flex-col gap-4" aria-label="Saved cities">
         {listBody}
       </ul>
     );
@@ -84,6 +95,7 @@ export default function SavedCities({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={modalBackdropTransition}
           className="fixed inset-0 z-[190] flex items-end justify-center bg-slate-900/50 p-4 backdrop-blur-sm sm:items-center"
           role="dialog"
           aria-modal="true"
@@ -91,10 +103,10 @@ export default function SavedCities({
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            initial={{ opacity: 0, y: modalPanelSlidePx * 2, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: modalPanelSlidePx * 2, scale: 0.985 }}
+            transition={modalPanelSpring}
             className="max-h-[70vh] w-full max-w-md overflow-hidden rounded-3xl border border-white/30 bg-white/95 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -108,10 +120,10 @@ export default function SavedCities({
                 className="rounded-xl p-2 text-slate-900/70 hover:bg-slate-100"
                 aria-label="Close"
               >
-                ✕
+                <X className="h-5 w-5" strokeWidth={ICON_STROKE} aria-hidden />
               </button>
             </div>
-            <ul className="max-h-[50vh] overflow-y-auto p-2">
+            <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
               {list.length === 0 && (
                 <li className="px-4 py-8 text-center text-sm text-slate-900/55">
                   No saved cities yet. Search a place and tap save on the city card.

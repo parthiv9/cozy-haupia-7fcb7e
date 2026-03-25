@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Mic } from 'lucide-react';
 import { getSearchSuggestions } from '../utils/api';
 import { DEBOUNCE_SEARCH_MS } from '../utils/helpers';
+
+const ICON_STROKE = 2;
 
 export default function SearchBar({ onSearch, onClear, loading }) {
   const [query, setQuery] = useState('');
@@ -180,20 +183,11 @@ export default function SearchBar({ onSearch, onClear, loading }) {
           }
           className="absolute right-2 top-1/2 z-[1] -translate-y-1/2 rounded-lg border border-white/35 bg-white/25 p-2 text-white shadow-sm transition hover:bg-white/35 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <svg
+          <Mic
             aria-hidden
-            viewBox="0 0 24 24"
             className={`h-5 w-5 flex-shrink-0 ${isListening ? 'animate-pulse' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-            <path d="M12 19v4" />
-          </svg>
+            strokeWidth={ICON_STROKE}
+          />
         </button>
         <AnimatePresence>
           {showSuggestions && suggestions.length > 0 && (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DayNightProvider } from './context/DayNightContext';
 import { useIsNight } from './hooks/useIsNight';
@@ -28,6 +28,8 @@ import {
 import { requestLocationPermission } from './utils/locationService';
 import { addFavoriteCity, getFavoriteCities, isFavoriteCityMatch } from './utils/storage';
 import { appConfig, appName } from './config/loadAppConfig';
+import { navigateToHash } from './utils/smoothScroll';
+import { scheduleAfterPaint } from './utils/scheduleUIWork';
 
 export default function App() {
   const [currentWeather, setCurrentWeather] = useState(null);
@@ -178,11 +180,7 @@ export default function App() {
     setNavMenuOpen(false);
     setSearchCountry(null);
     setSearchCountryName('');
-    if (typeof window !== 'undefined') {
-      const path = `${window.location.pathname}${window.location.search || ''}#home`;
-      window.history.replaceState(null, '', path);
-      requestAnimationFrame(() => document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' }));
-    }
+    navigateToHash('#home');
 
     if (f.lat != null && f.lon != null) {
       setSearchLoading(true);
@@ -229,6 +227,22 @@ export default function App() {
 
   const searchActive = Boolean(searchedCity || searchCountry?.length);
 
+  const openNavMenu = useCallback(() => {
+    scheduleAfterPaint(() => startTransition(() => setNavMenuOpen(true)));
+  }, []);
+  const openWeatherMapModal = useCallback(() => {
+    scheduleAfterPaint(() => startTransition(() => setWeatherMapOpen(true)));
+  }, []);
+  const openLocationDetail = useCallback(() => {
+    scheduleAfterPaint(() => startTransition(() => setShowLocationDetail(true)));
+  }, []);
+  const openSettingsModal = useCallback(() => {
+    scheduleAfterPaint(() => startTransition(() => setSettingsOpen(true)));
+  }, []);
+  const openAboutPanel = useCallback(() => {
+    scheduleAfterPaint(() => startTransition(() => setAboutOpen(true)));
+  }, []);
+
   return (
     <DayNightProvider isNight={isNightChrome}>
       <div
@@ -241,9 +255,9 @@ export default function App() {
             currentLoading={currentLoading}
             currentError={currentError}
             onRetryLocation={loadCurrentLocation}
-            onCurrentLocationClick={() => setShowLocationDetail(true)}
+            onCurrentLocationClick={openLocationDetail}
             isNight={isNightChrome}
-            onOpenNavMenu={() => setNavMenuOpen(true)}
+            onOpenNavMenu={openNavMenu}
             navMenuOpen={navMenuOpen}
             onSearch={handleSearch}
             searchLoading={searchLoading}
@@ -272,7 +286,7 @@ export default function App() {
                 data={currentWeather}
                 loading={currentLoading}
                 error={currentError}
-                onOpenDetail={() => setShowLocationDetail(true)}
+                onOpenDetail={openLocationDetail}
                 onRetry={loadCurrentLocation}
                 isNight={isNightChrome}
               />
@@ -290,7 +304,7 @@ export default function App() {
                 <p className="text-sm font-semibold text-white">Weather Map</p>
                 <button
                   type="button"
-                  onClick={() => setWeatherMapOpen(true)}
+                  onClick={openWeatherMapModal}
                   className="rounded-xl border border-white/25 bg-white/15 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/25"
                 >
                   Open Full Map
@@ -328,9 +342,9 @@ export default function App() {
         <MenuDrawer
           open={navMenuOpen}
           onClose={() => setNavMenuOpen(false)}
-          onOpenMap={() => setWeatherMapOpen(true)}
-          onOpenSaved={() => setSettingsOpen(true)}
-          onOpenAbout={() => setAboutOpen(true)}
+          onOpenMap={openWeatherMapModal}
+          onOpenSaved={openSettingsModal}
+          onOpenAbout={openAboutPanel}
         />
 
         <WeatherMap

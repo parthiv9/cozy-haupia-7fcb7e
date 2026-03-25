@@ -3,8 +3,20 @@
 @tailwind utilities;
 
 @layer base {
+  /* Offset sticky header (navbar) when jumping to in-page anchors */
   html {
-    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+  #home,
+  #forecast,
+  #weather-details,
+  #search {
+    scroll-margin-top: 5.5rem;
   }
   /* Default until `.weather-app` mounts (variables inherit to all app content). */
   :root {

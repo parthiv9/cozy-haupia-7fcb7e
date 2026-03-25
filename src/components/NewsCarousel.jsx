@@ -1,94 +1,128 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Slider from 'react-slick';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import NewsCard from './NewsCard';
+import 'slick-carousel/slick/slick.css';
+import '../styles/news-carousel.css';
+
+const ICON_STROKE = 2;
 
 /**
- * Horizontal slider for remaining news articles (scroll-snap + prev/next).
- * @param {{ articles: import('../utils/weatherNewsApi').WeatherNewsArticle[], indexOffset?: number, country?: string }} props
+ * Read slick inner state for prev/next enable (fractional slidesToShow–safe).
+ * @param {React.RefObject<import('react-slick').default | null>} sliderRef
  */
-export default function NewsCarousel({ articles, indexOffset = 3, country = '' }) {
-  const scrollerRef = useRef(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
+function getNavState(sliderRef) {
+  const inner = sliderRef.current?.innerSlider;
+  if (!inner?.state) {
+    return { canPrev: false, canNext: true };
+  }
+  const { currentSlide, slideCount } = inner.state;
+  const slidesToShow = Number(inner.props.slidesToShow) || 1;
+  const tol = 0.02;
+  const maxSlide = Math.max(0, slideCount - slidesToShow);
+  return {
+    canPrev: currentSlide > tol,
+    canNext: currentSlide < maxSlide - tol,
+  };
+}
 
-  const updateScrollState = useCallback(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    const maxScroll = scrollWidth - clientWidth;
-    setCanLeft(scrollLeft > 6);
-    setCanRight(maxScroll > 6 && scrollLeft < maxScroll - 6);
+/**
+ * Weather news row powered by react-slick (touch swipe, fractional peek, smooth transitions).
+ * @param {{ articles: import('../utils/weatherNewsApi').WeatherNewsArticle[], indexOffset?: number, country?: string, ariaLabel?: string }} props
+ */
+export default function NewsCarousel({ articles, indexOffset = 3, country = '', ariaLabel = 'Additional weather news headlines' }) {
+  const sliderRef = useRef(/** @type {import('react-slick').default | null} */ (null));
+  const [nav, setNav] = useState({ canPrev: false, canNext: true });
+
+  const syncNav = useCallback(() => {
+    setNav((prev) => {
+      const next = getNavState(sliderRef);
+      if (prev.canPrev === next.canPrev && prev.canNext === next.canNext) return prev;
+      return next;
+    });
   }, []);
 
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener('scroll', updateScrollState, { passive: true });
-    const ro = new ResizeObserver(() => updateScrollState());
-    ro.observe(el);
-    return () => {
-      el.removeEventListener('scroll', updateScrollState);
-      ro.disconnect();
-    };
-  }, [articles, updateScrollState]);
+  const settings = useMemo(
+    () => ({
+      dots: false,
+      infinite: false,
+      speed: 420,
+      cssEase: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      slidesToShow: 2.35,
+      slidesToScroll: 1,
+      swipeToSlide: true,
+      touchThreshold: 7,
+      arrows: false,
+      /** Only user-driven slide changes — onInit/onReInit + setState caused update loops with InnerSlider */
+      afterChange: syncNav,
+      responsive: [
+        {
+          breakpoint: 1200,
+          settings: { slidesToShow: 2.15, slidesToScroll: 1 },
+        },
+        {
+          breakpoint: 900,
+          settings: { slidesToShow: 1.75, slidesToScroll: 1 },
+        },
+        {
+          breakpoint: 640,
+          settings: { slidesToShow: 1.2, slidesToScroll: 1 },
+        },
+        {
+          breakpoint: 400,
+          settings: { slidesToShow: 1.08, slidesToScroll: 1 },
+        },
+      ],
+    }),
+    [syncNav]
+  );
 
-  const scrollByDir = (dir) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const step = Math.min(el.clientWidth * 0.75, 360);
-    el.scrollBy({ left: dir * step, behavior: 'smooth' });
-  };
+  useEffect(() => {
+    const id = requestAnimationFrame(syncNav);
+    return () => cancelAnimationFrame(id);
+  }, [articles.length, syncNav]);
 
   if (!articles.length) return null;
 
   return (
-    <div className="mt-3">
-      <div className="mb-3 flex items-center justify-end gap-3">
-        <div className="flex shrink-0 gap-1.5">
-          <button
-            type="button"
-            onClick={() => scrollByDir(-1)}
-            disabled={!canLeft}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/90 bg-white/90 text-slate-900 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 disabled:pointer-events-none disabled:opacity-35"
-            aria-label="Scroll news left"
-          >
-            <span className="text-lg leading-none" aria-hidden>
-              ‹
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollByDir(1)}
-            disabled={!canRight}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/90 bg-white/90 text-slate-900 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 disabled:pointer-events-none disabled:opacity-35"
-            aria-label="Scroll news right"
-          >
-            <span className="text-lg leading-none" aria-hidden>
-              ›
-            </span>
-          </button>
-        </div>
+    <div
+      className="news-carousel-slick relative mt-3"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={ariaLabel}
+    >
+      <div className="mb-3 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          className="news-carousel-toolbar-btn"
+          disabled={!nav.canPrev}
+          onClick={() => sliderRef.current?.slickPrev()}
+          aria-label="Previous headlines"
+        >
+          <ChevronLeft className="h-[18px] w-[18px] shrink-0" strokeWidth={ICON_STROKE} aria-hidden />
+        </button>
+        <button
+          type="button"
+          className="news-carousel-toolbar-btn"
+          disabled={!nav.canNext}
+          onClick={() => sliderRef.current?.slickNext()}
+          aria-label="Next headlines"
+        >
+          <ChevronRight className="h-[18px] w-[18px] shrink-0" strokeWidth={ICON_STROKE} aria-hidden />
+        </button>
       </div>
 
-      <div className="relative -mx-1">
-        <ul
-          ref={scrollerRef}
-          role="region"
-          aria-roledescription="carousel"
-          aria-label="Additional weather news articles"
-          className="flex list-none snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 pl-1 pr-1 pt-1 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.5)_transparent] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80"
-        >
-          {articles.map((a, i) => (
-            <NewsCard
-              key={`${country}-${a.id}`}
-              article={a}
-              index={indexOffset + i}
-              carouselTile
-              className="w-[min(100%,18.5rem)] shrink-0 snap-start sm:w-[20rem]"
-            />
-          ))}
-        </ul>
-      </div>
+      <Slider key={country} ref={sliderRef} {...settings} className="news-carousel-slider">
+        {articles.map((a, i) => (
+          <NewsCard
+            key={`${country}-${a.id}`}
+            article={a}
+            index={indexOffset + i}
+            carouselTile
+            className="w-full max-w-none min-[641px]:max-w-[20rem]"
+          />
+        ))}
+      </Slider>
     </div>
   );
 }

@@ -27,7 +27,12 @@ let openWeatherLayersKeyWarned = false;
 function warnOpenWeatherLayersMissingOnce() {
   if (openWeatherLayersKeyWarned) return;
   openWeatherLayersKeyWarned = true;
-  console.warn('API key missing, disabling layers');
+  // Avoid console.warn: React DevTools surfaces it as an “Error” with a component stack.
+  if (import.meta.env.DEV && typeof console.debug === 'function') {
+    console.debug(
+      '[SkyCast] VITE_OPENWEATHER_API_KEY not set or is a placeholder — OWM map tile layers are off. Radar/other map features may still work.'
+    );
+  }
 }
 
 /** Placeholder values from `.env` template — treated as “no key” so Open-Meteo fallback works. */
@@ -80,7 +85,7 @@ export function getGNewsApiKey() {
 
 /**
  * True when at least one of `VITE_GNEWS_API_KEY` or `VITE_NEWS_API_KEY` is set and not a placeholder.
- * When false, news modules should use RSS (BBC / CNN) only — no API calls with empty keys.
+ * When false, news modules should use RSS (BBC + ScienceDaily) only — no API calls with empty keys.
  */
 export function hasAnyNewsApiKey() {
   return Boolean(getGNewsApiKey() || getNewsApiKey());
