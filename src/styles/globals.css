@@ -162,6 +162,91 @@
   background: rgba(30, 41, 59, 0.6);
 }
 
+/* Navbar search field + inline buttons (Search.jsx) — same glass language as icon buttons / pill */
+.weather-app.app-day .app-navbar-search-field {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.45);
+  color: rgb(var(--app-fg-rgb));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.weather-app.app-day .app-navbar-search-field::placeholder {
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.weather-app.app-day .app-navbar-search-field:focus-visible {
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+.weather-app.app-night .app-navbar-search-field {
+  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.45);
+  color: rgb(var(--app-fg-rgb));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.weather-app.app-night .app-navbar-search-field::placeholder {
+  color: rgba(248, 250, 252, 0.45);
+}
+
+.weather-app.app-night .app-navbar-search-field:focus-visible {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.weather-app.app-day .app-navbar-search-glyph {
+  color: rgba(15, 23, 42, 0.42);
+}
+
+.weather-app.app-night .app-navbar-search-glyph {
+  color: rgba(248, 250, 252, 0.45);
+}
+
+.weather-app.app-day .app-navbar-search-inline-btn {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.45);
+  color: rgb(var(--app-fg-rgb));
+}
+
+.weather-app.app-day .app-navbar-search-inline-btn:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.weather-app.app-night .app-navbar-search-inline-btn {
+  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.45);
+  color: rgb(var(--app-fg-rgb));
+}
+
+.weather-app.app-night .app-navbar-search-inline-btn:hover {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.weather-app.app-night .app-navbar-search-mic--listening-darkfield {
+  color: rgb(125 211 252);
+}
+
+/* Solid light surface when the suggestion list is open (overrides field + inline btn night glass) */
+.weather-app .app-navbar-search-field.app-navbar-search-field--suggestions-open {
+  background: #fff;
+  border-color: rgb(226 232 240 / 0.9);
+  color: #0f172a;
+  box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+.weather-app .app-navbar-search-field.app-navbar-search-field--suggestions-open::placeholder {
+  color: rgb(100 116 139 / 0.85);
+}
+
+.weather-app .app-navbar-search-field.app-navbar-search-field--suggestions-open:focus-visible {
+  border-color: rgb(56 189 248 / 0.7);
+}
+
+.weather-app .app-navbar-search-field.app-navbar-search-field--suggestions-open ~ .app-navbar-search-glyph {
+  color: rgb(100 116 139);
+}
+
 .weather-app.app-night .location-modal-backdrop {
   background: rgba(2, 6, 23, 0.72) !important;
 }

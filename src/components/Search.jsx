@@ -231,15 +231,15 @@ export default function Search({
           aria-expanded={suggestionsOpen}
           aria-haspopup="listbox"
           aria-controls={suggestionsOpen ? suggestionsListId : undefined}
-          className={`relative z-0 w-full rounded-2xl border py-2.5 pl-10 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-sky-500/25 ${inputPadRight} ${
+          className={`app-navbar-search-field relative z-0 w-full rounded-full border py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 ${inputPadRight} ${
             suggestionsOpen
-              ? 'border-slate-200/90 bg-white text-slate-900 placeholder:text-slate-400 focus:border-sky-400/70'
-              : 'border-white/45 bg-white/55 text-app-fg backdrop-blur-xl placeholder:text-app-fg/45 focus:border-sky-400/60'
+              ? 'app-navbar-search-field--suggestions-open border-slate-200/90 bg-white text-slate-900 placeholder:text-slate-400 focus:border-sky-400/70'
+              : 'backdrop-blur-xl'
           }`}
         />
         <SearchGlyph
           className={`pointer-events-none absolute left-3 top-1/2 z-0 h-4 w-4 -translate-y-1/2 ${
-            suggestionsOpen ? 'text-slate-400' : 'text-app-fg/40'
+            suggestionsOpen ? 'text-slate-400' : 'app-navbar-search-glyph'
           }`}
           strokeWidth={ICON_STROKE}
           aria-hidden
@@ -250,12 +250,12 @@ export default function Search({
             onClick={handleClearSearch}
             aria-label="Clear search and show your location"
             title="Back to your location"
-            className={`absolute top-1/2 z-[1] -translate-y-1/2 rounded-lg border p-1.5 shadow-sm transition ${
+            className={`absolute top-1/2 z-[1] -translate-y-1/2 rounded-lg border p-1.5 transition ${
               voiceSupported ? 'right-10' : 'right-2'
             } ${
               suggestionsOpen
-                ? 'border-slate-200/90 bg-white text-slate-600 hover:bg-slate-50'
-                : 'border-white/45 bg-white/50 text-app-fg hover:bg-white/70'
+                ? 'border-slate-200/90 bg-white text-slate-600 shadow-sm hover:bg-slate-50'
+                : 'app-navbar-search-inline-btn shadow-[0_1px_2px_rgba(15,23,42,0.06)]'
             }`}
           >
             <X className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
@@ -272,15 +272,21 @@ export default function Search({
                 ? 'Listening…'
                 : 'Voice search — speak a city or country (Chrome / Edge recommended)'
             }
-            className={`absolute right-2 top-1/2 z-[1] -translate-y-1/2 rounded-lg border p-1.5 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`absolute right-2 top-1/2 z-[1] -translate-y-1/2 rounded-lg border p-1.5 transition disabled:cursor-not-allowed disabled:opacity-50 ${
               suggestionsOpen
-                ? 'border-slate-200/90 bg-white text-slate-600 hover:bg-slate-50'
-                : 'border-white/45 bg-white/50 text-app-fg hover:bg-white/70'
+                ? 'border-slate-200/90 bg-white text-slate-600 shadow-sm hover:bg-slate-50'
+                : 'app-navbar-search-inline-btn shadow-[0_1px_2px_rgba(15,23,42,0.06)]'
             }`}
           >
             <Mic
               aria-hidden
-              className={`h-4 w-4 flex-shrink-0 ${isListening ? 'animate-pulse text-sky-600' : ''}`}
+              className={`h-4 w-4 flex-shrink-0 ${
+                isListening
+                  ? suggestionsOpen
+                    ? 'animate-pulse text-sky-600'
+                    : 'animate-pulse text-sky-600 app-navbar-search-mic--listening-darkfield'
+                  : ''
+              }`}
               strokeWidth={ICON_STROKE}
             />
           </button>
